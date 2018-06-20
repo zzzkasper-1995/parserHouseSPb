@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "isomorphic-unfetch": "^2.0.0",
+    "jsdom": "^11.11.0",
+    "needle": "^2.2.1",
+    "winston": "^3.0.0",
+    "xlsx": "^0.13.0"
+  }
+}
