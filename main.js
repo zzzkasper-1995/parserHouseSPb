@@ -2,6 +2,8 @@ const http = require("http");
 const fetch = require('isomorphic-unfetch');
 const fs=require("fs");
 const winston = require('winston');
+const jsdom = require("jsdom");
+const { JSDOM } = jsdom;
 
 const logger = require('./log')(module);
 
@@ -14,8 +16,8 @@ const pause = (ms) => {
 }
 
 const URL = 'http://dom.mingkh.ru';
-const rowCount = 10; //количество адрессов (если -1 то выведет ВСЕ)
-const pauseTime = 250; 
+const rowCount = 1; //количество адрессов (если -1 то выведет ВСЕ)
+const pauseTime = 250;
 
 // Получаем весь список адресов СПб
 let parser = async () => {
@@ -63,7 +65,7 @@ parser().then(async (result) => {
         const houseFetch = await fetch(houseUrl);
         if (houseFetch.ok) {
           const houseHtml = await houseFetch.text();
-          fs.writeFileSync(`./html/${houseId}.html`, houseHtml, 'utf-8', ()=>{});
+          fs.writeFileSync(`./html/${houseId}.html`, houseHtml, 'utf-8');
         } else {
           logger.error('error get html' + houseId + error);
           pause(30000);
@@ -75,13 +77,29 @@ parser().then(async (result) => {
       logger.error('server in while:' + error.message);
     }
   }
-
-  fs.readdir('./html', (err, files) => {
-    files.forEach(file => {
-      console.log(file);
-    });
-  })
   console.log(new Date()-date);
+
+  fs.readdir('./html', async (err, files) => {
+    files.forEach(file => {
+      const dom = JSDOM.fromFile('./html/' + file, {}).then(dom => {
+        let json = {'id': file.split('.')[0]};
+        let houseTable = dom.window.document.querySelectorAll('.col-md-6 .table.table-striped tbody');
+        houseTable.forEach(table => {
+          houseChildren = table.children;
+          for (var i=0; i<houseChildren.length; i++) {
+            let key = houseChildren[i].children[0].innerHTML.replace('<sup>2</sup>', '.кв');
+            let value = houseChildren[i].children.length>=3 ?
+                        houseChildren[i].children[2].innerHTML:
+                        houseChildren[i].children[1].innerHTML;
+
+            json[key] = value;
+            console.log(key, value);
+          }
+          fs.writeFileSync(`./html/${file.split('.')[0]}.json`, JSON.stringify(json), 'utf-8');
+        });
+      });
+    });
+  });
 }).catch((error) => {
   logger.error('server promise catch' + error.message)
 });
