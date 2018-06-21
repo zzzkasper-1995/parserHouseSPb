@@ -16,8 +16,16 @@ const pause = (ms) => {
 }
 
 const URL = 'http://dom.mingkh.ru';
-const rowCount = 1; //количество адрессов (если -1 то выведет ВСЕ)
+const rowCount = 50; //количество адрессов (если -1 то выведет ВСЕ)
 const pauseTime = 250;
+
+if (!fs.existsSync('./html')){
+  fs.mkdirSync('./html');
+}
+
+if (!fs.existsSync('./log')){
+  fs.mkdirSync('./log');
+}
 
 // Получаем весь список адресов СПб
 let parser = async () => {
@@ -54,6 +62,8 @@ parser().then(async (result) => {
   logger.info('server promise then OK: lenght =' + result.rows.length);
   
   const date = new Date();
+
+  fs.writeFileSync(`./html/main.json`, JSON.stringify(result.rows), 'utf-8');
   for (let house of result.rows) {
     logger.info('id house:' + house.url);
 
@@ -80,23 +90,33 @@ parser().then(async (result) => {
   console.log(new Date()-date);
 
   fs.readdir('./html', async (err, files) => {
+    logger.info('Записываю JSON файлы');
+    pause(5000);
     files.forEach(file => {
-      const dom = JSDOM.fromFile('./html/' + file, {}).then(dom => {
-        let json = {'id': file.split('.')[0]};
-        let houseTable = dom.window.document.querySelectorAll('.col-md-6 .table.table-striped tbody');
-        houseTable.forEach(table => {
-          houseChildren = table.children;
-          for (var i=0; i<houseChildren.length; i++) {
-            let key = houseChildren[i].children[0].innerHTML.replace('<sup>2</sup>', '.кв');
-            let value = houseChildren[i].children.length>=3 ?
-                        houseChildren[i].children[2].innerHTML:
-                        houseChildren[i].children[1].innerHTML;
 
-            json[key] = value;
-            console.log(key, value);
-          }
-          fs.writeFileSync(`./html/${file.split('.')[0]}.json`, JSON.stringify(json), 'utf-8');
-        });
+      const dom = JSDOM.fromFile('./html/' + file, {}).then(dom => {
+        if (!fs.existsSync(`./html/${file.split('.')[0]}.json`)) {
+          let json = {'id': file.split('.')[0]};
+          
+          let houseTable = dom.window.document.querySelectorAll('.col-md-6 .table.table-striped tbody');
+          houseTable.forEach(table => {
+            houseChildren = table.children;
+            for (var i=0; i<houseChildren.length; i++) {
+              let key = houseChildren[i].children[0].innerHTML.replace('<sup>2</sup>', '.кв');
+              let value = houseChildren[i].children.length>=3 ?
+                          houseChildren[i].children[2].innerHTML:
+                          houseChildren[i].children[1].innerHTML;
+
+              json[key] = value;
+            }
+
+            let houseLat = dom.window.document.querySelector('input#mapcenterlat').value;
+            let houseLng = dom.window.document.querySelector('input#mapcenterlng').value;
+            json['coordinates'] = {houseLat, houseLng};
+          });
+
+          fs.writeFile(`./html/${file.split('.')[0]}.json`, JSON.stringify(json), 'utf-8', ()=>{});
+        }
       });
     });
   });
