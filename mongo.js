@@ -22,7 +22,7 @@ mongoose.connect('mongodb://localhost/houseDB', (err) => {
 		throw err;   
    }
 		
-	logger.info(`подключении к БД: ${err.message} прошло успешно`);
+	logger.info(`подключении к БД прошло успешно`);
 
 	//проверяем наличие файла со списком домов
 	if (!fs.existsSync('./html/main.json')) {
