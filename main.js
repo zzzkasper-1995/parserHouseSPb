@@ -16,7 +16,7 @@ const pause = (ms) => {
 }
 
 const URL = 'http://dom.mingkh.ru';
-const rowCount = 150; //количество адрессов (если -1 то выведет ВСЕ)
+const rowCount = -1; //количество адрессов (если -1 то выведет ВСЕ)
 const pauseTime = 250;
 
 if (!fs.existsSync('./html')){
@@ -97,8 +97,8 @@ parser().then(async (result) => {
     for (let file of files) {
       if(file.split('.')[1] === 'html') {
         number+=1;
-        const dom = await JSDOM.fromFile('./html/' + file, {});
         if (!fs.existsSync(`./html/${file.split('.')[0]}.json`)) {
+          const dom = await JSDOM.fromFile('./html/' + file, {});
           let json = {'id': file.split('.')[0]};
           
           let houseTable = dom.window.document.querySelectorAll('.col-md-6 .table.table-striped tbody');
@@ -120,7 +120,7 @@ parser().then(async (result) => {
           fs.writeFileSync(`./html/${file.split('.')[0]}.json`, JSON.stringify(json), 'utf-8');
           console.log('Конвертировано в JSON ' + number + ' файл');
         } else {
-          console.log(number + 'ый(ой) файл пропущен, он уже конвертирован в JSON');
+          console.log(number + ' ый(ой) файл пропущен, он уже конвертирован в JSON');
         }
       } 
     };
