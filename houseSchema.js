@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 
 var houseSchema = mongoose.Schema({
 	url: { type: String, unique: true, index: true },
-	address: { type: String, index: true },
+	address: { type: String, unique: true, index: true },
 	square: String,
 	year: String,
 	floors: String,
