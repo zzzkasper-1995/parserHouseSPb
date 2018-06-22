@@ -95,33 +95,34 @@ parser().then(async (result) => {
     let number = 0;
 
     for (let file of files) {
-      number = file.split('.')[1] === 'json' ? number+=1 : number;
+      if(file.split('.')[1] === 'html') {
+        number+=1;
+        const dom = await JSDOM.fromFile('./html/' + file, {});
+        if (!fs.existsSync(`./html/${file.split('.')[0]}.json`)) {
+          let json = {'id': file.split('.')[0]};
+          
+          let houseTable = dom.window.document.querySelectorAll('.col-md-6 .table.table-striped tbody');
+          houseTable.forEach(table => {
+            houseChildren = table.children;
+            for (var i=0; i<houseChildren.length; i++) {
+              let key = houseChildren[i].children[0].innerHTML.replace('<sup>2</sup>', '.кв');
+              let value = houseChildren[i].children.length>=3 ?
+                          houseChildren[i].children[2].innerHTML:
+                          houseChildren[i].children[1].innerHTML;
+              json[key] = value;
+            }
 
-      const dom = await JSDOM.fromFile('./html/' + file, {});
-      if (!fs.existsSync(`./html/${file.split('.')[0]}.json`)) {
-        let json = {'id': file.split('.')[0]};
-        
-        let houseTable = dom.window.document.querySelectorAll('.col-md-6 .table.table-striped tbody');
-        houseTable.forEach(table => {
-          houseChildren = table.children;
-          for (var i=0; i<houseChildren.length; i++) {
-            let key = houseChildren[i].children[0].innerHTML.replace('<sup>2</sup>', '.кв');
-            let value = houseChildren[i].children.length>=3 ?
-                        houseChildren[i].children[2].innerHTML:
-                        houseChildren[i].children[1].innerHTML;
+            let houseLng = dom.window.document.querySelector('input#mapcenterlng').value;
+            let houseLat = dom.window.document.querySelector('input#mapcenterlat').value;
+            json['coordinates'] = [houseLng, houseLat];
+          });
 
-            json[key] = value;
-          }
-
-          let houseLng = dom.window.document.querySelector('input#mapcenterlng').value;
-          let houseLat = dom.window.document.querySelector('input#mapcenterlat').value;
-          json['coordinates'] = [houseLng, houseLat];
-        });
-
-        fs.writeFileSync(`./html/${file.split('.')[0]}.json`, JSON.stringify(json), 'utf-8');
-      }
-      
-      file.split('.')[1] === 'json' && console.log('Конвертировано в JSON ' + number + ' файл');
+          fs.writeFileSync(`./html/${file.split('.')[0]}.json`, JSON.stringify(json), 'utf-8');
+          console.log('Конвертировано в JSON ' + number + ' файл');
+        } else {
+          console.log(number + 'ый(ой) файл пропущен, он уже конвертирован в JSON');
+        }
+      } 
     };
 
     logger.info('JSON файлы записаны');
