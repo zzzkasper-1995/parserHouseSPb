@@ -16,7 +16,7 @@ const pause = (ms) => {
 }
 
 const URL = 'http://dom.mingkh.ru';
-const rowCount = 50; //количество адрессов (если -1 то выведет ВСЕ)
+const rowCount = 150; //количество адрессов (если -1 то выведет ВСЕ)
 const pauseTime = 250;
 
 if (!fs.existsSync('./html')){
@@ -87,39 +87,46 @@ parser().then(async (result) => {
       logger.error('server in while:' + error.message);
     }
   }
-  console.log(new Date()-date);
+  console.log('На создание и проверку HTML файлов затрачено:' + new Date()-date + ' мс');
 
   fs.readdir('./html', async (err, files) => {
-    logger.info('Записываю JSON файлы');
+    logger.info('Запись файлов JSON начнется через 5 сек');
     pause(5000);
-    files.forEach(file => {
+    let number = 0;
 
-      const dom = JSDOM.fromFile('./html/' + file, {}).then(dom => {
-        if (!fs.existsSync(`./html/${file.split('.')[0]}.json`)) {
-          let json = {'id': file.split('.')[0]};
-          
-          let houseTable = dom.window.document.querySelectorAll('.col-md-6 .table.table-striped tbody');
-          houseTable.forEach(table => {
-            houseChildren = table.children;
-            for (var i=0; i<houseChildren.length; i++) {
-              let key = houseChildren[i].children[0].innerHTML.replace('<sup>2</sup>', '.кв');
-              let value = houseChildren[i].children.length>=3 ?
-                          houseChildren[i].children[2].innerHTML:
-                          houseChildren[i].children[1].innerHTML;
+    for (let file of files) {
+      number = file.split('.')[1] === 'json' ? number+=1 : number;
 
-              json[key] = value;
-            }
+      const dom = await JSDOM.fromFile('./html/' + file, {});
+      if (!fs.existsSync(`./html/${file.split('.')[0]}.json`)) {
+        let json = {'id': file.split('.')[0]};
+        
+        let houseTable = dom.window.document.querySelectorAll('.col-md-6 .table.table-striped tbody');
+        houseTable.forEach(table => {
+          houseChildren = table.children;
+          for (var i=0; i<houseChildren.length; i++) {
+            let key = houseChildren[i].children[0].innerHTML.replace('<sup>2</sup>', '.кв');
+            let value = houseChildren[i].children.length>=3 ?
+                        houseChildren[i].children[2].innerHTML:
+                        houseChildren[i].children[1].innerHTML;
 
-            let houseLat = dom.window.document.querySelector('input#mapcenterlat').value;
-            let houseLng = dom.window.document.querySelector('input#mapcenterlng').value;
-            json['coordinates'] = {houseLat, houseLng};
-          });
+            json[key] = value;
+          }
 
-          fs.writeFile(`./html/${file.split('.')[0]}.json`, JSON.stringify(json), 'utf-8', ()=>{});
-        }
-      });
-    });
+          let houseLng = dom.window.document.querySelector('input#mapcenterlng').value;
+          let houseLat = dom.window.document.querySelector('input#mapcenterlat').value;
+          json['coordinates'] = [houseLng, houseLat];
+        });
+
+        fs.writeFileSync(`./html/${file.split('.')[0]}.json`, JSON.stringify(json), 'utf-8');
+      }
+      
+      file.split('.')[1] === 'json' && console.log('Конвертировано в JSON ' + number + ' файл');
+    };
+
+    logger.info('JSON файлы записаны');
   });
+
 }).catch((error) => {
   logger.error('server promise catch' + error.message)
 });
