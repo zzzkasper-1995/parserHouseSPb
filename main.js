@@ -1,8 +1,8 @@
-const http = require("http");
+const http = require('http');
 const fetch = require('isomorphic-unfetch');
-const fs=require("fs");
+const fs=require('fs');
 const winston = require('winston');
-const jsdom = require("jsdom");
+const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
 
 const logger = require('./log')(module);
@@ -15,9 +15,12 @@ const pause = (ms) => {
   while(curDate-date < ms);
 }
 
-const URL = 'http://dom.mingkh.ru';
-const rowCount = -1; //количество адрессов (если -1 то выведет ВСЕ)
-const pauseTime = 250;
+const configText = fs.readFileSync('./config.json', 'utf-8');
+const config = JSON.parse(configText);
+
+const URL = config.URL;
+const rowCount = config.rowCount; //количество адрессов (если -1 то выведет ВСЕ)
+const pauseTime = config.pauseTime;
 
 if (!fs.existsSync('./html')){
   fs.mkdirSync('./html');
@@ -104,7 +107,7 @@ parser().then(async (result) => {
           let houseTable = dom.window.document.querySelectorAll('.col-md-6 .table.table-striped tbody');
           houseTable.forEach(table => {
             houseChildren = table.children;
-            for (var i=0; i<houseChildren.length; i++) {
+            for (let i=0; i<houseChildren.length; i++) {
               let key = houseChildren[i].children[0].innerHTML.replace('<sup>2</sup>', '.кв');
               let value = houseChildren[i].children.length>=3 ?
                           houseChildren[i].children[2].innerHTML:

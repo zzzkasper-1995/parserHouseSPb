@@ -3,7 +3,7 @@ const fs=require("fs");
 const winston = require('winston');
 
 const Schema = mongoose.Schema;
-const House = require('./houseSchema');
+const House = require('./mongoScheme/houseSchema');
 
 const logger = require('./log')(module);
 

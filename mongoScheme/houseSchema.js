@@ -1,6 +1,6 @@
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-var houseSchema = mongoose.Schema({
+const houseSchema = mongoose.Schema({
 	url: { type: String, unique: true, index: true },
 	address: { type: String, unique: true, index: true },
 	square: String,
@@ -16,6 +16,6 @@ var houseSchema = mongoose.Schema({
 
 houseSchema.index({geometry: '2dsphere'});
 
-var House = mongoose.model('House', houseSchema);
+const House = mongoose.model('House', houseSchema);
 
 module.exports = House;
