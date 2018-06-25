@@ -15,12 +15,21 @@ const pause = (ms) => {
   while(curDate-date < ms);
 }
 
-const configText = fs.readFileSync('./config.json', 'utf-8');
-const config = JSON.parse(configText);
+let URL = 'http://dom.mingkh.ru';
+let rowCount = 10; //количество адрессов (если -1 то выведет ВСЕ)
+let pauseTime = 250;
 
-const URL = config.URL;
-const rowCount = config.rowCount; //количество адрессов (если -1 то выведет ВСЕ)
-const pauseTime = config.pauseTime;
+if (fs.existsSync(`./config.json`)) {
+  const configText = fs.readFileSync('./config.json', 'utf-8');
+  const config = JSON.parse(configText);
+  URL = config.URL;
+  rowCount = config.rowCount; //количество адрессов (если -1 то выведет ВСЕ)
+  pauseTime = config.pauseTime;
+} else {
+  logger.error('./config.json not exist! The default settings are used');
+  return 0;
+}
+
 
 if (!fs.existsSync('./html')){
   fs.mkdirSync('./html');
