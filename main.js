@@ -74,7 +74,7 @@ const getListHouses = async (regionUrl = 'sankt-peterburg', cityUrl) => {
 };
 
 // скопировать html-файл дома
-const getHtmlHouses = async (city='default', listHouses) => {
+const getHtmlHouses = async (region = 'default', listHouses, city) => {
   const date = new Date();
 
   for (let house of listHouses) {
@@ -85,11 +85,15 @@ const getHtmlHouses = async (city='default', listHouses) => {
       const houseUrl = URL+house.url;
 
       //если html для данного дома нет то создать
-      if (!fs.existsSync(`./html/${city}/${houseId}.html`)) {
+      let fileName = `./html/${region}`;
+      fileName += city ? `/${city}`: '';
+      fileName += `/${houseId}.html`;
+
+      if (!fs.existsSync(fileName)) {
         const houseFetch = await fetch(houseUrl);
         if (houseFetch.ok) {
           const houseHtml = await houseFetch.text();
-          fs.writeFileSync(`./html/${city}/${houseId}.html`, houseHtml, 'utf-8');
+          fs.writeFileSync(fileName, houseHtml, 'utf-8');
         } else {
           logger.error('error get html' + houseId + error);
           pause(30000);
@@ -106,8 +110,8 @@ const getHtmlHouses = async (city='default', listHouses) => {
 
 //записать json-файл с информацией о доме
 //json-файлы создаются путем распарсивания html-файлов лежащих в папке ./html
-const writeJsonHouses = (city='default') => {
-  fs.readdir(`./html/${city}`, async (err, files) => {
+const writeJsonHouses = (path) => {
+  fs.readdir(`${path}`, async (err, files) => {
     logger.info('Запись файлов JSON начнется через 5 сек');
     pause(5000);
     
@@ -121,8 +125,8 @@ const writeJsonHouses = (city='default') => {
           number+=1;
           //еслт json для данного html нет то создать
 
-          if (!fs.existsSync(`./html/${city}/${file.split('.')[0]}.json`)) {
-            const dom = await JSDOM.fromFile(`./html/${city}/${file}`, {});
+          if (!fs.existsSync(`${path}/${file.split('.')[0]}.json`)) {
+            const dom = await JSDOM.fromFile(`${path}/${file}`, {});
             let json = {'id': file.split('.')[0]};
             
             //вытаскиваем информация из DOM
@@ -142,8 +146,8 @@ const writeJsonHouses = (city='default') => {
               json['coordinates'] = [houseLng, houseLat];
             });
 
-            fs.writeFileSync(`./html/${city}/${file.split('.')[0]}.json`, JSON.stringify(json), 'utf-8');
-            console.log('Конвертировано в JSON ' + number + ' файл ' + city);
+            fs.writeFileSync(`${path}/${file.split('.')[0]}.json`, JSON.stringify(json), 'utf-8');
+            console.log('Конвертировано в JSON ' + number + ' файл ' + path);
           } else {
             console.log(number + ' ый(ой) файл пропущен, он уже конвертирован в JSON');
           }
@@ -153,45 +157,67 @@ const writeJsonHouses = (city='default') => {
       logger.error('writeJsonHouses:' + error.message)
     }
 
-    logger.info(`JSON файлы ${city} записаны`);
+    logger.info(`JSON файлы ${path} записаны`);
   });
 }
 
 //главная исполняемая функция программы
-const main = async () => {
-  //Список городов
-  const cityList = [
-    /*'sankt-peterburg',*/
-    'zelenogorsk',
-    'kolpino',
-    'krasnoe-selo',
-    'kronshtadt',
-    'lomonosov',
-    'pavlovsk',
-    'pesochnyy',
-    'pushkin',
-    'sestroreck',
-    'shushary',
-  ];
+const main = async (region, cityList) => {
 
+  if(cityList!==undefined) {
+    console.log(1);
+    for(let city of cityList) {
+      try {
+        //Если папка для хранения информации о домах города не существует то создать
+        if (!fs.existsSync(`./html/${region}`)){
+          fs.mkdirSync(`./html/${region}`);
+        }
+        if (!fs.existsSync(`./html/${region}/${city}`)){
+          fs.mkdirSync(`./html/${region}/${city}`);
+        }
 
-  for(let city of cityList) {
+        let result = await getListHouses(region, city);
+        logger.info('server promise then OK: total = ' + result.total);
+        fs.writeFileSync(`./html/${region}/${city}/main.json`, JSON.stringify(result.rows), 'utf-8');
+        await getHtmlHouses(region, result.rows, city);
+        console.log(0);
+        const path = `./html/${region}/${city}`
+        writeJsonHouses(path);
+      } catch(error) {
+        logger.error(`main: ${error.message}`);
+      }
+    }
+  } else {
+    console.log(2);
     try {
       //Если папка для хранения информации о домах города не существует то создать
-      if (!fs.existsSync(`./html/${city}`)){
-        fs.mkdirSync(`./html/${city}`);
+      if (!fs.existsSync(`./html/${region}`)){
+        fs.mkdirSync(`./html/${region}`);
       }
 
-      let result = await getListHouses('sankt-peterburg', city);
+      let result = await getListHouses(region); //let result = await getListHouses(region, city);
       logger.info('server promise then OK: total = ' + result.total);
-      fs.writeFileSync(`./html/${city}/main.json`, JSON.stringify(result.rows), 'utf-8');
-      await getHtmlHouses(city, result.rows);
-      console.log(0);
-      writeJsonHouses(city);
+      fs.writeFileSync(`./html/${region}/main.json`, JSON.stringify(result.rows), 'utf-8');
+      await getHtmlHouses(region, result.rows);
+      const path = `./html/${region}`
+      writeJsonHouses(path);
     } catch(error) {
       logger.error(`main: ${error.message}`);
     }
   }
 }
 
-main();
+
+  //регион
+  let region = 'leningradskaya-oblast';
+
+  //для выборки данных по городам
+  //Список городов для указанного региона
+  const cityList = [
+    'boksitogorsk',
+    'volhov',
+  ];
+
+main(region, cityList);
+//region = 'sankt-peterburg';
+//main(region);
