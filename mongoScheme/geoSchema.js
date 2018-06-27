@@ -8,6 +8,9 @@ const geoSchema = mongoose.Schema({
 	stroke: String,
 	strokeWidth: String,
 	strokeOpacity: Number,
+	numberHouses: Number,
+	numberPorch: Number,
+	numberRoom: Number,
 });
 
 const Geo = mongoose.model('Geo', geoSchema);

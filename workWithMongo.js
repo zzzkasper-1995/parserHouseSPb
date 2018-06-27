@@ -131,7 +131,7 @@ const calculaterPorch = async (idPolygon) => {
 	}
 }
 
-/** Подсчет количества домов
+/** Подсчет количества квартир
  *  id - Number, ID района
  */
 const calculaterRoom = async (idPolygon) => {
@@ -219,13 +219,47 @@ const findAndSaveParentPolygon = async () => {
 	}
 }
 
+/*Обновление информации полигонов о количестве домов подъездов квартир*/
+const updatePolygonInfo = async () => {
+	try{	
+		//Поиск всех полигонов, кроме тех котоые выделены желтым и оранжевым цветом
+		let geo = await Geo.find();
+		logger.info('Найдено полигонов: ' + geo.length);
+
+		let number = 0;
+		for(let polygon of geo) {
+			number += 1;
+
+			let numberHouses = await calculaterHouses(polygon.id);
+			let numberPorch = await calculaterPorch(polygon.id);
+			let numberRoom = await calculaterRoom(polygon.id);
+
+			try {
+				await Geo.findOneAndUpdate({ id: polygon.id },
+					{ 
+						numberHouses: numberHouses,
+						numberPorch: numberPorch,
+						numberRoom: numberRoom
+					});
+			} catch (error) {
+				logger.error('findAndSaveParentPolygon update Geo: ' + error.message);
+			}
+
+			number % 20 === 0 && console.log('Проверено полигонов:', number);
+		}
+		console.log('END');
+	} catch (error) {
+		logger.error('findAndSaveParentPolygon ' + error.message);
+	}
+}
+
 /* Главная выполняемая функция */
 const main = async () => {
 	!fs.existsSync('./log') && fs.mkdirSync('./log'); //если папка для логов не существует, то создать
 
 	try {
 		await mongoose.connect('mongodb://localhost/houseDB');
-		logger.info(`подключении к БД прошло успешно!\n`);
+		/*logger.info(`подключении к БД прошло успешно!\n`);
 		const POLYGON_ID = 211;
 
 		let numberHouses = await calculaterHouses(POLYGON_ID);
@@ -235,9 +269,11 @@ const main = async () => {
 		console.log('Найден', numberPorch, 'подъезд в ', POLYGON_ID, 'полигоне');
 		
 		let numberRoom = await calculaterRoom(POLYGON_ID);
-		console.log('в ', POLYGON_ID, 'полигоне ориентировочно', numberRoom, 'жилых помещений');
+		console.log('в ', POLYGON_ID, 'полигоне ориентировочно', numberRoom, 'жилых помещений');*/
 
-		await findAndSaveParentPolygon();
+		await updatePolygonInfo();
+
+		//await findAndSaveParentPolygon();
 	} catch (error){
 		logger.error('main ' + error.message);
 	}
