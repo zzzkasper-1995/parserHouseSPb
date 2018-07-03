@@ -40,8 +40,8 @@ const pause = (ms) => {
   while(curDate-date < ms);
 }
 
-// функция получает весь список адресов по городу
-const getListHouses = async (regionUrl = 'sankt-peterburg', cityUrl) => {
+// функция получает весь список адресов по городу и региону
+const getListHouses = async (regionUrl = 'sankt-peterburg', cityUrl = 'sankt-peterburg') => {
   try{
     logger.info('getListHouses start');
     
@@ -162,62 +162,69 @@ const writeJsonHouses = (path) => {
 }
 
 //главная исполняемая функция программы
-const main = async (region, cityList) => {
+const main = async (region) => {
+  try {
+    //Если папка для хранения информации о домах города не существует то создать
+    if (!fs.existsSync(`./html/${region}`)){
+      fs.mkdirSync(`./html/${region}`);
+    }
 
-  if(cityList!==undefined) {
-    console.log(1);
-    for(let city of cityList) {
-      try {
-        //Если папка для хранения информации о домах города не существует то создать
-        if (!fs.existsSync(`./html/${region}`)){
-          fs.mkdirSync(`./html/${region}`);
-        }
-        if (!fs.existsSync(`./html/${region}/${city}`)){
-          fs.mkdirSync(`./html/${region}/${city}`);
-        }
+    let result = await getListHouses(region);
+    logger.info('server promise then OK: total = ' + result.total);
+    fs.writeFileSync(`./html/${region}/main.json`, JSON.stringify(result.rows), 'utf-8');
 
-        let result = await getListHouses(region, city);
-        logger.info('server promise then OK: total = ' + result.total);
-        fs.writeFileSync(`./html/${region}/${city}/main.json`, JSON.stringify(result.rows), 'utf-8');
-        await getHtmlHouses(region, result.rows, city);
-        console.log(0);
-        const path = `./html/${region}/${city}`
-        writeJsonHouses(path);
-      } catch(error) {
-        logger.error(`main: ${error.message}`);
+    let uniqueUrlCity = {};
+    for(let houseRow of result.rows) {
+      let url = String(houseRow.url).split('/')[2];
+      if(uniqueUrlCity[url]===undefined) {
+        uniqueUrlCity[url] = true;
       }
     }
-  } else {
-    console.log(2);
-    try {
-      //Если папка для хранения информации о домах города не существует то создать
-      if (!fs.existsSync(`./html/${region}`)){
-        fs.mkdirSync(`./html/${region}`);
-      }
 
-      let result = await getListHouses(region); //let result = await getListHouses(region, city);
+    for(let city in uniqueUrlCity) {
+      console.log(city);
+      let result = await getListHouses(region, city);
       logger.info('server promise then OK: total = ' + result.total);
-      fs.writeFileSync(`./html/${region}/main.json`, JSON.stringify(result.rows), 'utf-8');
-      await getHtmlHouses(region, result.rows);
-      const path = `./html/${region}`
+      if (!fs.existsSync(`./html/${region}/${city}`)){
+        fs.mkdirSync(`./html/${region}/${city}`);
+      }
+      fs.writeFileSync(`./html/${region}/${city}/main.json`, JSON.stringify(result.rows), 'utf-8');
+      await getHtmlHouses(region, result.rows, city);
+      const path = `./html/${region}/${city}`
       writeJsonHouses(path);
-    } catch(error) {
-      logger.error(`main: ${error.message}`);
     }
+  } catch(error) {
+    logger.error(`main: ${error.message}`);
+  }
+}
+
+const main_city = async (region, city) => {
+  try {
+    //Если папка для хранения информации о домах города не существует то создать
+    console.log(111)
+    if (!fs.existsSync(`./html/${region}`)){
+      fs.mkdirSync(`./html/${region}`);
+    }
+
+    console.log(city);
+    let result = await getListHouses(region, city);
+    logger.info('server promise then OK: total = ' + result.total);
+    if (!fs.existsSync(`./html/${region}/${city}`)){
+      fs.mkdirSync(`./html/${region}/${city}`);
+    }
+    fs.writeFileSync(`./html/${region}/${city}/main.json`, JSON.stringify(result.rows), 'utf-8');
+    await getHtmlHouses(region, result.rows, city);
+    const path = `./html/${region}/${city}`
+    writeJsonHouses(path);
+  } catch(error) {
+    logger.error(`main: ${error.message}`);
   }
 }
 
 
-  //регион
-  let region = 'leningradskaya-oblast';
-
-  //для выборки данных по городам
-  //Список городов для указанного региона
-  const cityList = [
-    'boksitogorsk',
-    'volhov',
-  ];
-
-main(region, cityList);
-//region = 'sankt-peterburg';
+//регион
+let region = 'leningradskaya-oblast';
+let city = 'villozi';
 //main(region);
+
+main_city(region, city);

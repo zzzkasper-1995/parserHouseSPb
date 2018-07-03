@@ -73,44 +73,65 @@ if (!fs.existsSync('./log')){
   fs.mkdirSync('./log');
 }
 
-mongoose.connect('mongodb://localhost/houseDB', async (err) => {
-	if(err) {
-		logger.error(`ошибка при подключении к БД: ${err.message}`);
-		throw err;   
-  }
-	let numberSave = 0;
-	let number = 0;
-		
-	logger.info(`подключении к БД прошло успешно`);
+const main = () => {
+	mongoose.connect('mongodb://localhost/houseDB', async (err) => {
+		if(err) {
+			logger.error(`ошибка при подключении к БД: ${err.message}`);
+			throw err;   
+	  }
+		let numberSave = 0;
+		let number = 0;
+			
+		logger.info(`подключении к БД прошло успешно`);
 
-	try {
-		//смотрим содержимое ./html
-		let dirRegions = fs.readdirSync(`./html`);
-		//пробегаем в цикле по всем наименованиям которые есть в ./html
-		dirRegions.forEach(dirRegion => {	
-			//если точки нет значит мы нашли папку с регионом, потому что если точка етсь то это точно файл
-			if(dirRegion.indexOf('.') === -1) {
-				let pathRegion = `./html/${dirRegion}`;
-				//смотрим содержимое папки региона
-				try{
-					let dirСities = fs.readdirSync(pathRegion);
-					dirСities.forEach(dirCity => {	
-						//если точки нет значит мы нашли папку с городом
-						if(dirCity.indexOf('.') === -1) {
-							let pathCity = `${pathRegion}/${dirCity}`;
-							saveHouses(pathCity);
-						}
-					});
-					saveHouses(pathRegion);
-				} catch(error) {
-					console.log(error.message);
+		try {
+			//смотрим содержимое ./html
+			let dirRegions = fs.readdirSync(`./html`);
+			//пробегаем в цикле по всем наименованиям которые есть в ./html
+			dirRegions.forEach(dirRegion => {	
+				//если точки нет значит мы нашли папку с регионом, потому что если точка етсь то это точно файл
+				if(dirRegion.indexOf('.') === -1) {
+					let pathRegion = `./html/${dirRegion}`;
+					//смотрим содержимое папки региона
+					try{
+						let dirСities = fs.readdirSync(pathRegion);
+						dirСities.forEach(dirCity => {	
+							//если точки нет значит мы нашли папку с городом
+							if(dirCity.indexOf('.') === -1) {
+								let pathCity = `${pathRegion}/${dirCity}`;
+								saveHouses(pathCity);
+							}
+						});
+						saveHouses(pathRegion);
+					} catch(error) {
+						console.log(error.message);
+					}
 				}
-			}
-		});
-	} catch (error) {
-		console.log(error.message);
-	}
+			});
+		} catch (error) {
+			console.log(error.message);
+		}
 
-	console.log('subEnd')
-});
+		console.log('subEnd')
+	});
+}
+
+const main_city = (path) => {
+	mongoose.connect('mongodb://localhost/houseDB', async (err) => {
+		if(err) {
+			logger.error(`ошибка при подключении к БД: ${err.message}`);
+			throw err;   
+	  }
+		let numberSave = 0;
+		let number = 0;
+			
+		logger.info(`подключении к БД прошло успешно`);
+
+		saveHouses(path);
+
+		console.log('subEnd')
+	});
+}
+
+main_city('./html/leningradskaya-oblast/villozi');
 
