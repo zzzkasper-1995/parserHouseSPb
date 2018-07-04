@@ -62,7 +62,7 @@ mongoose.connect('mongodb://localhost/houseDB', (err) => {
 			coordinate.save((err) => {
 				if(err) {
 					logger.error(`Ошибка при сохранении кординаты с id ${element['id']} и номером ${index}: ${err.message}`);
-		    }
+		    	}
 			});
 		});
 
