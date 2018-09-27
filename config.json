@@ -1,5 +1,7 @@
 {
     "URL": "http://dom.mingkh.ru",
     "rowCount": -1,
-    "pauseTime": 250
+    "pauseTime": 250,
+    "filePolygonJSON": "Квадраты_14-08-2018_11-06-02.json",
+    "linkConnect": "mongodb://192.168.0.121/houseDB"
 }

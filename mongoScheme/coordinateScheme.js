@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 
+/**
+ * number - Номер точки в полигоне
+ * geometry - координата точки
+ */
 const geoCoordinate = mongoose.Schema({
     id: { type: Number, index: true },
     number: Number,

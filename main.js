@@ -201,12 +201,10 @@ const main = async (region) => {
 const main_city = async (region, city) => {
   try {
     //Если папка для хранения информации о домах города не существует то создать
-    console.log(111)
     if (!fs.existsSync(`./html/${region}`)){
       fs.mkdirSync(`./html/${region}`);
     }
 
-    console.log(city);
     let result = await getListHouses(region, city);
     logger.info('server promise then OK: total = ' + result.total);
     if (!fs.existsSync(`./html/${region}/${city}`)){

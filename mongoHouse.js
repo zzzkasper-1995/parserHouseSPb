@@ -1,8 +1,5 @@
 const mongoose = require('mongoose');
 const fs=require("fs");
-const winston = require('winston');
-
-const Schema = mongoose.Schema;
 const House = require('./mongoScheme/houseSchema');
 
 const logger = require('./log')(module);
@@ -19,7 +16,6 @@ const saveHouses = (path) => {
 
 	logger.info('Начал просмотр всех имеющихся записей');
 	let numberSave = 0;
-	let number = 0;
 	for (let element of houses) {
 		number+=1; //количество проверенных записей
 
@@ -50,7 +46,7 @@ const saveHouses = (path) => {
 
 		// заполняем поле дополнительной информации
 		Object.keys(element.supportInfo).forEach(key => {
-			//ключ храним в закодированом виде потому что мангуст не терпит ключи со спец знаками (. , * ` ...)
+			//ключ храним в закодированом виде потому что монгуст не терпит ключи со спец знаками (. , * ` ...)
 			house.supportInfo.set(Buffer.from(key).toString('base64'), element.supportInfo[key]);
 		});
 	
@@ -79,8 +75,6 @@ const main = () => {
 			logger.error(`ошибка при подключении к БД: ${err.message}`);
 			throw err;   
 	  }
-		let numberSave = 0;
-		let number = 0;
 			
 		logger.info(`подключении к БД прошло успешно`);
 
@@ -122,8 +116,6 @@ const main_city = (path) => {
 			logger.error(`ошибка при подключении к БД: ${err.message}`);
 			throw err;   
 	  }
-		let numberSave = 0;
-		let number = 0;
 			
 		logger.info(`подключении к БД прошло успешно`);
 

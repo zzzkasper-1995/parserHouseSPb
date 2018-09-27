@@ -11,6 +11,8 @@ const geoSchema = mongoose.Schema({
 	numberHouses: Number,
 	numberPorch: Number,
 	numberRoom: Number,
+	areaSpace: Number,
+	squareCoords: Number,
 });
 
 const Geo = mongoose.model('Geo', geoSchema);
